@@ -1,22 +1,13 @@
-from typing import Generator
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .db import SessionLocal, engine, Base
+from .db import engine, Base
+from .routers.todos import router as todos_router
 
 # Create tables on startup to ensure database is ready
 def init_db() -> None:
-    """Initialize database tables."""
+    """Initialize database tables by creating all metadata."""
     Base.metadata.create_all(bind=engine)
-
-def get_db() -> Generator:
-    """Dependency that provides a SQLAlchemy session and ensures proper cleanup."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 app = FastAPI(
     title="ToDo Backend API",
@@ -24,6 +15,7 @@ app = FastAPI(
     version="0.1.0",
     openapi_tags=[
         {"name": "health", "description": "Health check endpoints"},
+        {"name": "todos", "description": "To-do management endpoints"},
     ],
 )
 
@@ -44,3 +36,6 @@ def on_startup():
 def health_check():
     """Return a simple health status payload."""
     return {"message": "Healthy"}
+
+# Include routers
+app.include_router(todos_router)
